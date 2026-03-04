@@ -25,7 +25,10 @@
 <!-- Main Content -->
 <div class="p-3 main">
 	<div class="d-flex justify-content-between align-items-center mb-3">
-		<h4>Snowstorm Dashboard</h4>
+		<div>
+			<h4>Snowstorm Dashboard</h4>
+			<small class="text-muted" x-text="'FHIR API: ' + fhirBaseUrl"></small>
+		</div>
 	</div>
 
 	<!-- FHIR Resources section -->
@@ -320,9 +323,14 @@
 							<td x-text="r.publisher"></td>
 							<td>
 								<template x-if="!r.url || !r.url.includes('http://snomed.info/sct') || !r.url.includes('?fhir_cm=')">
-									<button class="btn btn-sm btn-outline-primary" title="View" @click="viewDetail('conceptmap', r.id)">
-										<i class="bi bi-eye"></i>
-									</button>
+									<div class="d-flex gap-1">
+										<button class="btn btn-sm btn-outline-primary" title="View" @click="viewDetail('conceptmap', r.id)">
+											<i class="bi bi-eye"></i>
+										</button>
+										<button class="btn btn-sm btn-outline-danger" title="Delete" @click="confirmDeleteConceptMap(r.id, r.title)">
+											<i class="bi bi-trash"></i>
+										</button>
+									</div>
 								</template>
 							</td>
 						</tr>
@@ -655,6 +663,34 @@
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Delete ConceptMap Confirmation Modal -->
+<div class="modal fade" id="deleteConceptMapModal" tabindex="-1" aria-labelledby="deleteConceptMapModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="deleteConceptMapModalLabel">Delete ConceptMap</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" :disabled="deletingConceptMap"></button>
+			</div>
+			<div class="modal-body">
+				<p>Are you sure you want to delete this ConceptMap?</p>
+				<p class="fw-bold" x-text="deleteConfirmTitle"></p>
+				<div x-show="deleteConceptMapError" class="alert alert-danger py-2 small" x-text="deleteConceptMapError"></div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal" :disabled="deletingConceptMap">Cancel</button>
+				<button type="button" class="btn btn-danger" @click="deleteConceptMap()" :disabled="deletingConceptMap">
+					<template x-if="!deletingConceptMap"><span>Delete</span></template>
+					<template x-if="deletingConceptMap">
+						<span class="d-flex align-items-center gap-1">
+							<span class="spinner-border spinner-border-sm" role="status"></span> Deleting...
+						</span>
+					</template>
+				</button>
 			</div>
 		</div>
 	</div>

@@ -4,6 +4,7 @@ document.addEventListener('alpine:init', () => {
 		const SYNDICATION_TIMEOUT_MS = 10000;
 
 		return {
+			fhirBaseUrl: 'http://localhost:8080/fhir',
 			section: 'resources',
 			tab: 'codesystem',
 			codeSystems: [],
@@ -36,6 +37,10 @@ document.addEventListener('alpine:init', () => {
 			addConceptMapJson: '',
 			addConceptMapError: null,
 			addConceptMapSaving: false,
+			deleteConfirmId: null,
+			deleteConfirmTitle: null,
+			deletingConceptMap: false,
+			deleteConceptMapError: null,
 
 			get resourceCountText() {
 				if (this.tab === 'codesystem') {
@@ -158,6 +163,10 @@ document.addEventListener('alpine:init', () => {
 			},
 
 			init() {
+				const txParam = new URLSearchParams(window.location.search).get('tx');
+				if (txParam) {
+					this.fhirBaseUrl = txParam.replace(/\/$/, '');
+				}
 				window.addEventListener('hashchange', () => this.initFromHash());
 				this.initFromHash();
 			},
@@ -227,7 +236,7 @@ document.addEventListener('alpine:init', () => {
 				try {
 					[syndRes, csRes] = await Promise.all([
 						this.fetchWithTimeout('/syndication/snomed-editions', SYNDICATION_TIMEOUT_MS),
-						this.fetchWithTimeout('/fhir/CodeSystem', AJAX_TIMEOUT_MS)
+						this.fetchWithTimeout(this.fhirBaseUrl + '/CodeSystem', AJAX_TIMEOUT_MS)
 					]);
 					const syndData = await syndRes.json();
 					const csData = await csRes.json();
@@ -341,7 +350,7 @@ document.addEventListener('alpine:init', () => {
 				this.errorCodesystems = null;
 				let res;
 				try {
-					res = await this.fetchWithTimeout('/fhir/CodeSystem', AJAX_TIMEOUT_MS);
+					res = await this.fetchWithTimeout(this.fhirBaseUrl + '/CodeSystem', AJAX_TIMEOUT_MS);
 					const data = await res.json();
 					if (!res.ok) throw new Error(data.message || 'Failed to load CodeSystems');
 					if (data.entry && data.entry.length > 0) {
@@ -362,7 +371,7 @@ document.addEventListener('alpine:init', () => {
 				this.errorValueSets = null;
 				let res;
 				try {
-					res = await this.fetchWithTimeout('/fhir/ValueSet', AJAX_TIMEOUT_MS);
+					res = await this.fetchWithTimeout(this.fhirBaseUrl + '/ValueSet', AJAX_TIMEOUT_MS);
 					const data = await res.json();
 					if (!res.ok) throw new Error(data.message || 'Failed to load ValueSets');
 					if (data.entry && data.entry.length > 0) {
@@ -412,7 +421,7 @@ document.addEventListener('alpine:init', () => {
 					return;
 				}
 				try {
-					const res = await this.fetchWithTimeout('/fhir/ValueSet', AJAX_TIMEOUT_MS, {
+					const res = await this.fetchWithTimeout(this.fhirBaseUrl + '/ValueSet', AJAX_TIMEOUT_MS, {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/fhir+json' },
 						body: JSON.stringify(payload)
@@ -472,7 +481,7 @@ document.addEventListener('alpine:init', () => {
 					return;
 				}
 				try {
-					const res = await this.fetchWithTimeout('/fhir/ConceptMap', AJAX_TIMEOUT_MS, {
+					const res = await this.fetchWithTimeout(this.fhirBaseUrl + '/ConceptMap', AJAX_TIMEOUT_MS, {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/fhir+json' },
 						body: JSON.stringify(payload)
@@ -503,7 +512,7 @@ document.addEventListener('alpine:init', () => {
 				this.errorConceptMaps = null;
 				let res;
 				try {
-					res = await this.fetchWithTimeout('/fhir/ConceptMap', AJAX_TIMEOUT_MS);
+					res = await this.fetchWithTimeout(this.fhirBaseUrl + '/ConceptMap', AJAX_TIMEOUT_MS);
 					const data = await res.json();
 					if (!res.ok) throw new Error(data.message || 'Failed to load ConceptMaps');
 					if (data.entry && data.entry.length > 0) {
@@ -545,6 +554,36 @@ document.addEventListener('alpine:init', () => {
 				return err.message || `Error loading ${label}`;
 			},
 
+			confirmDeleteConceptMap(id, title) {
+				this.deleteConfirmId = id;
+				this.deleteConfirmTitle = title;
+				this.deleteConceptMapError = null;
+				bootstrap.Modal.getOrCreateInstance(document.getElementById('deleteConceptMapModal')).show();
+			},
+
+			async deleteConceptMap() {
+				if (!this.deleteConfirmId) return;
+				this.deletingConceptMap = true;
+				this.deleteConceptMapError = null;
+				let res;
+				try {
+					res = await this.fetchWithTimeout(this.fhirBaseUrl + '/ConceptMap/' + this.deleteConfirmId, AJAX_TIMEOUT_MS, {
+						method: 'DELETE'
+					});
+					if (!res.ok) {
+						const data = await res.json().catch(() => ({}));
+						const msg = data.issue && data.issue[0] && (data.issue[0].diagnostics || data.issue[0].details && data.issue[0].details.text);
+						throw new Error(msg || data.message || 'Failed to delete ConceptMap');
+					}
+					bootstrap.Modal.getOrCreateInstance(document.getElementById('deleteConceptMapModal')).hide();
+					await this.loadConceptMaps();
+				} catch (err) {
+					this.deleteConceptMapError = err.name === 'AbortError' ? 'Request timed out. Please try again.' : (err.message || 'Failed to delete ConceptMap');
+				} finally {
+					this.deletingConceptMap = false;
+				}
+			},
+
 			async viewDetail(type, id) {
 				this.modalType = type;
 				this.modalLoading = true;
@@ -554,7 +593,7 @@ document.addEventListener('alpine:init', () => {
 				const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
 				modal.show();
 
-				const url = `/fhir/${type === 'codesystem' ? 'CodeSystem' : type === 'valueset' ? 'ValueSet' : 'ConceptMap'}/${id}`;
+				const url = `${this.fhirBaseUrl}/${type === 'codesystem' ? 'CodeSystem' : type === 'valueset' ? 'ValueSet' : 'ConceptMap'}/${id}`;
 				let res;
 				try {
 					res = await this.fetchWithTimeout(url, AJAX_TIMEOUT_MS);

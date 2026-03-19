@@ -120,7 +120,7 @@
 							<td colspan="6" class="text-center text-muted">No CodeSystems found</td>
 						</tr>
 					</template>
-					<template x-for="r in sortedCodeSystems" :key="r.id">
+					<template x-for="r in sortedCodeSystems" :key="(r.url || 'n/a') + ':' + (r.version || 'n/a')">
 						<tr>
 							<td x-text="r.title"></td>
 							<td x-text="r.url"></td>
@@ -219,7 +219,7 @@
 							<td colspan="6" class="text-center text-muted">No ValueSets found</td>
 						</tr>
 					</template>
-					<template x-for="r in sortedValueSets" :key="r.id">
+					<template x-for="r in sortedValueSets" :key="(r.url || 'n/a') + ':' + (r.version || 'n/a')">
 						<tr>
 							<td x-text="r.title"></td>
 							<td x-text="r.url"></td>
@@ -318,7 +318,7 @@
 							<td colspan="6" class="text-center text-muted">No ConceptMaps found</td>
 						</tr>
 					</template>
-					<template x-for="r in sortedConceptMaps" :key="r.id">
+					<template x-for="r in sortedConceptMaps" :key="(r.url || 'n/a') + ':' + (r.version || 'n/a')">
 						<tr>
 							<td>
 								<div x-text="r.title"></div>

@@ -45,6 +45,15 @@ body {
     color: #8ea0b3;
 }
 
+.code-system-warnings {
+    position: fixed;
+    left: 220px;
+    right: 0;
+    bottom: 0;
+    z-index: 1080;
+    padding: 0.75rem 1rem;
+}
+
 #resources,
 #syndication {
     flex-grow: 1;

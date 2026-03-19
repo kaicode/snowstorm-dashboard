@@ -22,6 +22,8 @@ document.addEventListener('alpine:init', () => {
 			errorConceptMaps: null,
 			errorSyndication: null,
 			errorInstalledEditions: null,
+			codeSystemWarnings: [],
+			showCodeSystemWarningsDetails: false,
 			installState: {},
 			sortKey: { codesystem: 'title', valueset: 'title', conceptmap: 'title', syndication: 'title' },
 			sortAsc: { codesystem: true, valueset: true, conceptmap: true, syndication: true },
@@ -363,13 +365,17 @@ document.addEventListener('alpine:init', () => {
 			async loadCodeSystems() {
 				this.loadingCodesystems = true;
 				this.errorCodesystems = null;
+				this.codeSystemWarnings = [];
 				let res;
 				try {
 					res = await this.fetchWithTimeout(this.fhirBaseUrl + '/CodeSystem', AJAX_TIMEOUT_MS);
 					const data = await res.json();
 					if (!res.ok) throw new Error(data.message || 'Failed to load CodeSystems');
 					if (data.entry && data.entry.length > 0) {
-						this.codeSystems = data.entry.map(e => this.normalizeRow(e.resource));
+						const rows = data.entry.map(e => this.normalizeRow(e.resource));
+						const deduped = this.dedupeCodeSystemsByUrlVersion(rows);
+						this.codeSystems = deduped.kept;
+						this.codeSystemWarnings = deduped.warnings;
 					} else {
 						this.codeSystems = [];
 					}
@@ -552,6 +558,47 @@ document.addEventListener('alpine:init', () => {
 					status: resource.status || 'N/A',
 					publisher: resource.publisher || 'N/A'
 				};
+			},
+
+			dedupeCodeSystemsByUrlVersion(rows) {
+				const byKey = new Map();
+				for (const cs of rows) {
+					const url = (cs.url || '').toString();
+					const version = (cs.version || '').toString();
+					const key = url + '|' + version;
+					if (!byKey.has(key)) byKey.set(key, []);
+					byKey.get(key).push(cs);
+				}
+
+				const kept = [];
+				const warnings = [];
+				let seq = 0;
+
+				for (const [, items] of byKey.entries()) {
+					if (!items || items.length <= 1) {
+						kept.push(items[0]);
+						continue;
+					}
+
+					const internationalCandidates = items.filter(it =>
+						(it.title || '').toString().toLowerCase().includes('international edition')
+					);
+					const keep = internationalCandidates.length > 0 ? internationalCandidates[0] : items[0];
+					kept.push(keep);
+
+					for (const discard of items) {
+						if (discard === keep) continue;
+						warnings.push({
+							seq: seq++,
+							url: (discard.url || '').toString(),
+							version: (discard.version || '').toString(),
+							keptTitle: (keep.title || '').toString(),
+							discardedTitle: (discard.title || '').toString()
+						});
+					}
+				}
+
+				return { kept, warnings };
 			},
 
 			fetchWithTimeout(url, ms, options = {}) {

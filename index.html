@@ -488,6 +488,31 @@
 		<h5>Upload SNOMED CT</h5>
 		<div class="row"></div>
 	</div>
+
+	<!-- CodeSystem duplicate warnings -->
+	<div class="code-system-warnings" x-show="tab === 'codesystem' && codeSystemWarnings.length > 0" x-cloak>
+		<div class="alert alert-warning mb-0 small"
+			style="cursor: pointer;"
+			@click="showCodeSystemWarningsDetails = !showCodeSystemWarningsDetails"
+			x-bind:aria-expanded="showCodeSystemWarningsDetails ? 'true' : 'false'">
+			<div class="d-flex align-items-center justify-content-between gap-2">
+				<div class="fw-bold" x-text="codeSystemWarnings.length + ' configuration issues detected'"></div>
+				<div class="text-muted" x-text="showCodeSystemWarningsDetails ? '▲' : '▼'"></div>
+			</div>
+
+			<div class="mt-2" x-show="showCodeSystemWarningsDetails" x-transition>
+				<div class="text-muted small mb-1">
+					Discarded entries (duplicates by `url` + `version`):
+				</div>
+				<ul class="mb-0">
+					<template x-for="w in codeSystemWarnings" :key="w.seq">
+						<li class="small"
+							x-text="w.discardedTitle + ' [' + w.url + ' @ ' + w.version + ']' + ' kept: ' + w.keptTitle"></li>
+					</template>
+				</ul>
+			</div>
+		</div>
+	</div>
 </div>
 
 <!-- CodeSystem Details Modal -->

@@ -17,7 +17,14 @@
 <div id="sidebar">
 	<h5 class="text-center text-white">Snowstorm</h5>
 	<a href="#" @click.prevent="section = 'resources'; setHash()">FHIR Resources</a>
-	<a href="#" @click.prevent="section = 'syndication'; setHash(); loadSyndicationIfNeeded()">Syndication</a>
+	<span :title="!syndicationAvailable ? 'Syndication is not available for this instance.' : ''">
+		<a href="#"
+			:class="{ 'sidebar-link-disabled': !syndicationAvailable }"
+			:aria-disabled="!syndicationAvailable"
+			@click.prevent="if (syndicationAvailable) { section = 'syndication'; setHash(); loadSyndicationIfNeeded(); }">
+			Syndication
+		</a>
+	</span>
 	<a href="#" @click.prevent="section = 'upload-sct'; setHash()">Upload SNOMED CT</a>
 	<hr class="border-secondary" />
 </div>
@@ -27,6 +34,8 @@
 	<div class="d-flex justify-content-between align-items-center mb-3">
 		<div>
 			<h4>Snowstorm Dashboard</h4>
+		</div>
+		<div class="text-end">
 			<small class="text-muted" x-text="'FHIR API: ' + fhirBaseUrl"></small>
 		</div>
 	</div>
@@ -327,9 +336,11 @@
 										<button class="btn btn-sm btn-outline-primary" title="View" @click="viewDetail('conceptmap', r.id)">
 											<i class="bi bi-eye"></i>
 										</button>
-										<button class="btn btn-sm btn-outline-danger" title="Delete" @click="confirmDeleteConceptMap(r.id, r.title)">
-											<i class="bi bi-trash"></i>
-										</button>
+										<span :title="conceptMapDeleteSupported ? 'Delete' : 'Operation not supported by server'" style="display: inline-block;">
+											<button class="btn btn-sm" :class="conceptMapDeleteSupported ? 'btn-outline-danger' : 'btn-outline-secondary'" :disabled="!conceptMapDeleteSupported" @click="confirmDeleteConceptMap(r.id, r.title)">
+												<i class="bi bi-trash"></i>
+											</button>
+										</span>
 									</div>
 								</template>
 							</td>

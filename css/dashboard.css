@@ -34,6 +34,17 @@ body {
     color: white;
 }
 
+#sidebar a.sidebar-link-disabled {
+    color: #8ea0b3;
+    opacity: 0.75;
+    cursor: not-allowed;
+}
+
+#sidebar a.sidebar-link-disabled:hover {
+    background-color: transparent;
+    color: #8ea0b3;
+}
+
 #resources,
 #syndication {
     flex-grow: 1;

@@ -41,6 +41,17 @@ document.addEventListener('alpine:init', () => {
 			deleteConfirmTitle: null,
 			deletingConceptMap: false,
 			deleteConceptMapError: null,
+			capabilityStatement: null,
+			syndicationAvailable: true,
+
+			get conceptMapDeleteSupported() {
+				if (!this.capabilityStatement) return true;
+				const rest = (this.capabilityStatement.rest || [])[0];
+				if (!rest) return true;
+				const conceptMapRes = (rest.resource || []).find(r => r.type === 'ConceptMap');
+				if (!conceptMapRes) return true;
+				return (conceptMapRes.interaction || []).some(i => i.code === 'delete');
+			},
 
 			get resourceCountText() {
 				if (this.tab === 'codesystem') {
@@ -167,6 +178,7 @@ document.addEventListener('alpine:init', () => {
 				if (txParam) {
 					this.fhirBaseUrl = txParam.replace(/\/$/, '');
 				}
+				this.loadCapabilityStatement();
 				window.addEventListener('hashchange', () => this.initFromHash());
 				this.initFromHash();
 			},
@@ -222,6 +234,9 @@ document.addEventListener('alpine:init', () => {
 			},
 
 			loadSyndicationIfNeeded() {
+				if (!this.syndicationAvailable) {
+					return;
+				}
 				if (this.editions.length === 0 && !this.loadingSyndication) {
 					this.loadSyndicationEditions();
 				}
@@ -552,6 +567,36 @@ document.addEventListener('alpine:init', () => {
 					if (res.status === 500) return 'Server error. Please try again later.';
 				}
 				return err.message || `Error loading ${label}`;
+			},
+
+			async loadCapabilityStatement() {
+				try {
+					const res = await this.fetchWithTimeout(this.fhirBaseUrl + '/metadata', AJAX_TIMEOUT_MS);
+					if (res.ok) {
+						this.capabilityStatement = await res.json();
+					}
+				} catch (err) {
+					// Silently fail - assume all operations supported if metadata unavailable
+				} finally {
+					await this.checkSyndicationAvailability();
+				}
+			},
+
+			async checkSyndicationAvailability() {
+				try {
+					const res = await this.fetchWithTimeout('/syndication/snomed-editions', SYNDICATION_TIMEOUT_MS, {
+						method: 'OPTIONS'
+					});
+					this.syndicationAvailable = res.ok;
+				} catch (err) {
+					this.syndicationAvailable = false;
+				}
+				if (!this.syndicationAvailable && this.section === 'syndication') {
+					this.section = 'resources';
+					this.tab = 'codesystem';
+					this.setHash();
+					this.loadTabIfNeeded();
+				}
 			},
 
 			confirmDeleteConceptMap(id, title) {

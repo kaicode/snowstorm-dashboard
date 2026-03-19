@@ -45,6 +45,12 @@ body {
     color: #8ea0b3;
 }
 
+#sidebar .sidebar-logo {
+    width: 150px;
+    height: auto;
+    display: inline-block;
+}
+
 .code-system-warnings {
     position: fixed;
     left: 220px;

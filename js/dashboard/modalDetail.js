@@ -18,6 +18,9 @@ export const dashboardModalDetail = {
 			const data = await res.json();
 			if (!res.ok) throw new Error(data.message || 'Not found');
 			this.modalDetail = data;
+			if (type === 'conceptmap' && this.modalDetail && !this.modalDetail.fullUrl && this.modalDetail.id) {
+				this.modalDetail.fullUrl = `${this.fhirBaseUrl}/ConceptMap/${encodeURIComponent(this.modalDetail.id)}`;
+			}
 		} catch (err) {
 			if (err.name === 'AbortError') this.modalError = 'Request timed out. Please try again.';
 			else if (typeof res !== 'undefined' && res.status === 404) this.modalError = `${type === 'codesystem' ? 'CodeSystem' : type === 'valueset' ? 'ValueSet' : 'ConceptMap'} not found.`;

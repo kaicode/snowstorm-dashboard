@@ -749,6 +749,11 @@
 				</template>
 			</div>
 			<div class="modal-footer">
+				<button type="button" class="btn btn-outline-primary" title="Open raw resource in new tab"
+					:disabled="!modalDetail || !modalDetail.fullUrl"
+					@click="modalDetail && modalDetail.fullUrl && window.open(modalDetail.fullUrl, '_blank', 'noopener,noreferrer')">
+					View Resource
+				</button>
 				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
 			</div>
 		</div>

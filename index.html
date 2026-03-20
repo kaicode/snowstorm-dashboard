@@ -570,7 +570,8 @@
 					<p class="mt-2">Loading CodeSystem details...</p>
 				</div>
 				<div x-show="modalError" class="alert alert-danger" x-text="modalError"></div>
-				<div x-show="!modalLoading && !modalError && modalDetail" x-cloak>
+				<template x-if="!modalLoading && !modalError && modalDetail">
+				<div>
 					<div class="row">
 						<div class="col-md-6">
 							<h6 class="fw-bold">Basic Information</h6>
@@ -608,6 +609,7 @@
 						</div>
 					</div>
 				</div>
+				</template>
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -630,7 +632,8 @@
 					<p class="mt-2">Loading ValueSet details...</p>
 				</div>
 				<div x-show="modalError" class="alert alert-danger" x-text="modalError"></div>
-				<div x-show="!modalLoading && !modalError && modalDetail" x-cloak>
+				<template x-if="!modalLoading && !modalError && modalDetail">
+				<div>
 					<div class="row">
 						<div class="col-md-6">
 							<h6 class="fw-bold">Basic Information</h6>
@@ -668,6 +671,7 @@
 						</div>
 					</div>
 				</div>
+				</template>
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -690,7 +694,8 @@
 					<p class="mt-2">Loading ConceptMap details...</p>
 				</div>
 				<div x-show="modalError" class="alert alert-danger" x-text="modalError"></div>
-				<div x-show="!modalLoading && !modalError && modalDetail" x-cloak>
+				<template x-if="!modalLoading && !modalError && modalDetail">
+				<div>
 					<div class="row">
 						<div class="col-md-6">
 							<h6 class="fw-bold">Basic Information</h6>
@@ -737,6 +742,7 @@
 						</div>
 					</div>
 				</div>
+				</template>
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

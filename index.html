@@ -273,6 +273,10 @@
 									<label class="form-label small mb-0">URL <span class="text-danger">*</span></label>
 									<input type="text" class="form-control form-control-sm" x-model="addConceptMapUrl"
 										@input="syncConceptMapUrlFromName()">
+									<div x-show="(addConceptMapUrl || '').toLowerCase().includes('example.com')" x-transition
+										class="alert alert-warning py-1 px-2 small mb-0 mt-1" role="alert">
+										Replace with your domain. This is just for resource identification.
+									</div>
 								</div>
 								<div class="col-md-6">
 									<label class="form-label small mb-0">Version <span class="text-danger">*</span></label>

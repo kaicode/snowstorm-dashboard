@@ -2,6 +2,24 @@ document.addEventListener('alpine:init', () => {
 	Alpine.data('dashboard', () => {
 		const AJAX_TIMEOUT_MS = 60000;
 		const SYNDICATION_TIMEOUT_MS = 10000;
+		const CONCEPT_MAP_STATUSES = ['draft', 'active', 'retired', 'unknown'];
+		const CONCEPTMAP_DEFAULT_URL_PREFIX = 'http://example.com/fhir/ConceptMap/';
+
+		function normalizeConceptMapStatus(val) {
+			const s = val == null ? '' : String(val).trim();
+			return CONCEPT_MAP_STATUSES.includes(s) ? s : 'draft';
+		}
+
+		function slugifyConceptMapName(raw) {
+			if (raw == null) return '';
+			let s = String(raw).normalize('NFD').replace(/\p{M}/gu, '');
+			s = s.toLowerCase();
+			s = s.replace(/\s+/g, '-');
+			s = s.replace(/[^a-z0-9_-]+/g, '');
+			s = s.replace(/-+/g, '-').replace(/^-+|-+$/g, '');
+			s = s.replace(/_+/g, '_');
+			return s;
+		}
 
 		return {
 			fhirBaseUrl: 'http://localhost:8080/fhir',
@@ -36,7 +54,14 @@ document.addEventListener('alpine:init', () => {
 			addValueSetError: null,
 			addValueSetSaving: false,
 			showAddConceptMapForm: false,
-			addConceptMapJson: '',
+			addConceptMapPayload: null,
+			addConceptMapUrl: '',
+			addConceptMapVersion: '',
+			addConceptMapTitle: '',
+			addConceptMapName: '',
+			addConceptMapStatus: 'draft',
+			addConceptMapDescription: '',
+			addConceptMapExperimental: false,
 			addConceptMapError: null,
 			addConceptMapSaving: false,
 			deleteConfirmId: null,
@@ -474,7 +499,49 @@ document.addEventListener('alpine:init', () => {
 				if (!file) return;
 				const reader = new FileReader();
 				reader.onload = () => {
-					this.addConceptMapJson = reader.result || '';
+					const text = (reader.result || '').trim();
+					let payload;
+					try {
+						payload = JSON.parse(text);
+					} catch (e) {
+						this.addConceptMapPayload = null;
+						this.addConceptMapUrl = '';
+						this.addConceptMapVersion = '';
+						this.addConceptMapTitle = '';
+						this.addConceptMapName = '';
+						this.addConceptMapStatus = 'draft';
+						this.addConceptMapDescription = '';
+						this.addConceptMapExperimental = false;
+						this.addConceptMapError = 'Invalid JSON: ' + (e.message || 'parse error');
+						return;
+					}
+					if (payload.resourceType !== 'ConceptMap') {
+						this.addConceptMapPayload = null;
+						this.addConceptMapUrl = '';
+						this.addConceptMapVersion = '';
+						this.addConceptMapTitle = '';
+						this.addConceptMapName = '';
+						this.addConceptMapStatus = 'draft';
+						this.addConceptMapDescription = '';
+						this.addConceptMapExperimental = false;
+						this.addConceptMapError = 'Resource must be a ConceptMap (resourceType: "ConceptMap")';
+						return;
+					}
+					this.addConceptMapPayload = payload;
+					this.addConceptMapUrl = payload.url != null ? String(payload.url) : '';
+					this.addConceptMapVersion = payload.version != null ? String(payload.version) : '';
+					this.addConceptMapTitle = payload.title != null ? String(payload.title) : '';
+					const urlFromFile = (this.addConceptMapUrl || '').trim();
+					if (!urlFromFile) {
+						this.addConceptMapName = slugifyConceptMapName(this.addConceptMapTitle);
+					} else {
+						const existingName = payload.name != null ? String(payload.name).trim() : '';
+						this.addConceptMapName = existingName || slugifyConceptMapName(this.addConceptMapTitle);
+					}
+					this.addConceptMapDescription = payload.description != null ? String(payload.description) : '';
+					this.addConceptMapStatus = normalizeConceptMapStatus(payload.status);
+					this.addConceptMapExperimental = payload.experimental === true;
+					if (!(this.addConceptMapUrl || '').trim()) this.syncConceptMapUrlFromName();
 				};
 				reader.onerror = () => {
 					this.addConceptMapError = 'Failed to read file';
@@ -483,24 +550,50 @@ document.addEventListener('alpine:init', () => {
 				event.target.value = '';
 			},
 
+			resolvedAddConceptMapName() {
+				let n = (this.addConceptMapName || '').trim();
+				if (!n) n = slugifyConceptMapName((this.addConceptMapTitle || '').trim());
+				return n;
+			},
+
+			syncConceptMapUrlFromName() {
+				if ((this.addConceptMapUrl || '').trim() !== '') return;
+				const name = this.resolvedAddConceptMapName();
+				if (!name) return;
+				this.addConceptMapUrl = CONCEPTMAP_DEFAULT_URL_PREFIX + name;
+			},
+
+			syncConceptMapNameFromTitle() {
+				if ((this.addConceptMapName || '').trim() === '') {
+					this.addConceptMapName = slugifyConceptMapName(this.addConceptMapTitle || '');
+				}
+				this.syncConceptMapUrlFromName();
+			},
+
 			async submitAddConceptMap() {
-				const jsonStr = this.addConceptMapJson.trim();
-				if (!jsonStr) return;
+				if (!this.addConceptMapPayload) return;
+				const url = (this.addConceptMapUrl || '').trim();
+				const version = (this.addConceptMapVersion || '').trim();
+				if (!url || !version) {
+					this.addConceptMapError = 'URL and version are required.';
+					return;
+				}
 				this.addConceptMapError = null;
 				this.addConceptMapSaving = true;
-				let payload;
-				try {
-					payload = JSON.parse(jsonStr);
-				} catch (e) {
-					this.addConceptMapError = 'Invalid JSON: ' + (e.message || 'parse error');
-					this.addConceptMapSaving = false;
-					return;
-				}
-				if (payload.resourceType !== 'ConceptMap') {
-					this.addConceptMapError = 'Resource must be a ConceptMap (resourceType: "ConceptMap")';
-					this.addConceptMapSaving = false;
-					return;
-				}
+				const payload = JSON.parse(JSON.stringify(this.addConceptMapPayload));
+				payload.url = url;
+				payload.version = version;
+				const title = (this.addConceptMapTitle || '').trim();
+				if (title) payload.title = title;
+				else delete payload.title;
+				const name = this.resolvedAddConceptMapName();
+				if (name) payload.name = name;
+				else delete payload.name;
+				payload.status = this.addConceptMapStatus;
+				const desc = (this.addConceptMapDescription || '').trim();
+				if (desc) payload.description = desc;
+				else delete payload.description;
+				payload.experimental = !!this.addConceptMapExperimental;
 				try {
 					const res = await this.fetchWithTimeout(this.fhirBaseUrl + '/ConceptMap', AJAX_TIMEOUT_MS, {
 						method: 'POST',
@@ -524,7 +617,14 @@ document.addEventListener('alpine:init', () => {
 			},
 
 			clearAddConceptMapForm() {
-				this.addConceptMapJson = '';
+				this.addConceptMapPayload = null;
+				this.addConceptMapUrl = '';
+				this.addConceptMapVersion = '';
+				this.addConceptMapTitle = '';
+				this.addConceptMapName = '';
+				this.addConceptMapStatus = 'draft';
+				this.addConceptMapDescription = '';
+				this.addConceptMapExperimental = false;
 				this.addConceptMapError = null;
 			},
 

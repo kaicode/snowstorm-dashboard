@@ -31,6 +31,7 @@ function createDashboardState() {
 		installState: {},
 		sortKey: { codesystem: 'title', valueset: 'title', conceptmap: 'title', syndication: 'title' },
 		sortAsc: { codesystem: true, valueset: true, conceptmap: true, syndication: true },
+		tableFilter: { codesystem: '', valueset: '', conceptmap: '' },
 		modalType: null,
 		modalDetail: null,
 		modalLoading: false,

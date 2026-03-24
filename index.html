@@ -83,6 +83,11 @@
 
 		<!-- CodeSystem Table -->
 		<div x-show="tab === 'codesystem'" x-transition style="display: none;">
+			<div class="mb-2">
+				<label class="form-label small mb-1">Filter</label>
+				<input type="search" class="form-control form-control-sm" placeholder="Filter by title, URL, version, status, publisher, or id"
+					x-model="tableFilter.codesystem" autocomplete="off">
+			</div>
 			<table class="table table-striped table-bordered">
 				<thead>
 					<tr>
@@ -118,9 +123,14 @@
 							<td colspan="6" class="text-center text-danger" x-text="errorCodesystems"></td>
 						</tr>
 					</template>
-					<template x-if="!loadingCodesystems && !errorCodesystems && sortedCodeSystems.length === 0">
+					<template x-if="!loadingCodesystems && !errorCodesystems && codeSystems.length === 0">
 						<tr>
 							<td colspan="6" class="text-center text-muted">No CodeSystems found</td>
+						</tr>
+					</template>
+					<template x-if="!loadingCodesystems && !errorCodesystems && codeSystems.length > 0 && sortedCodeSystems.length === 0">
+						<tr>
+							<td colspan="6" class="text-center text-muted">No rows match your filter.</td>
 						</tr>
 					</template>
 					<template x-for="r in sortedCodeSystems" :key="(r.url || 'n/a') + ':' + (r.version || 'n/a')">
@@ -182,6 +192,11 @@
 					</div>
 				</div>
 			</div>
+			<div class="mb-2">
+				<label class="form-label small mb-1">Filter</label>
+				<input type="search" class="form-control form-control-sm" placeholder="Filter by title, URL, version, status, publisher, or id"
+					x-model="tableFilter.valueset" autocomplete="off">
+			</div>
 			<table class="table table-striped table-bordered">
 				<thead>
 					<tr>
@@ -217,9 +232,14 @@
 							<td colspan="6" class="text-center text-danger" x-text="errorValueSets"></td>
 						</tr>
 					</template>
-					<template x-if="!loadingValueSets && !errorValueSets && sortedValueSets.length === 0">
+					<template x-if="!loadingValueSets && !errorValueSets && valueSets.length === 0">
 						<tr>
 							<td colspan="6" class="text-center text-muted">No ValueSets found</td>
+						</tr>
+					</template>
+					<template x-if="!loadingValueSets && !errorValueSets && valueSets.length > 0 && sortedValueSets.length === 0">
+						<tr>
+							<td colspan="6" class="text-center text-muted">No rows match your filter.</td>
 						</tr>
 					</template>
 					<template x-for="r in sortedValueSets" :key="(r.url || 'n/a') + ':' + (r.version || 'n/a')">
@@ -323,6 +343,11 @@
 					</div>
 				</div>
 			</div>
+			<div class="mb-2">
+				<label class="form-label small mb-1">Filter</label>
+				<input type="search" class="form-control form-control-sm" placeholder="Filter by title, URL, version, status, publisher, or id"
+					x-model="tableFilter.conceptmap" autocomplete="off">
+			</div>
 			<table class="table table-striped table-bordered">
 				<thead>
 					<tr>
@@ -358,9 +383,14 @@
 							<td colspan="6" class="text-center text-danger" x-text="errorConceptMaps"></td>
 						</tr>
 					</template>
-					<template x-if="!loadingConceptMaps && !errorConceptMaps && sortedConceptMaps.length === 0">
+					<template x-if="!loadingConceptMaps && !errorConceptMaps && conceptMaps.length === 0">
 						<tr>
 							<td colspan="6" class="text-center text-muted">No ConceptMaps found</td>
+						</tr>
+					</template>
+					<template x-if="!loadingConceptMaps && !errorConceptMaps && conceptMaps.length > 0 && sortedConceptMaps.length === 0">
+						<tr>
+							<td colspan="6" class="text-center text-muted">No rows match your filter.</td>
 						</tr>
 					</template>
 					<template x-for="r in sortedConceptMaps" :key="(r.url || 'n/a') + ':' + (r.version || 'n/a')">

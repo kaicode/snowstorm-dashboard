@@ -1,3 +1,11 @@
+function matchesTableFilter(row, query) {
+	const q = (query || '').trim();
+	if (!q) return true;
+	const needle = q.toLowerCase();
+	const fields = ['title', 'url', 'version', 'status', 'publisher', 'id'];
+	return fields.some(f => String(row[f] ?? '').toLowerCase().includes(needle));
+}
+
 export const dashboardGetters = {
 	get conceptMapDeleteSupported() {
 		if (!this.capabilityStatement) return true;
@@ -37,13 +45,22 @@ export const dashboardGetters = {
 	},
 
 	get sortedCodeSystems() {
-		return this.sortedFor('codesystem', this.codeSystems);
+		const filtered = this.codeSystems.filter(r =>
+			matchesTableFilter(r, this.tableFilter.codesystem)
+		);
+		return this.sortedFor('codesystem', filtered);
 	},
 	get sortedValueSets() {
-		return this.sortedFor('valueset', this.valueSets);
+		const filtered = this.valueSets.filter(r =>
+			matchesTableFilter(r, this.tableFilter.valueset)
+		);
+		return this.sortedFor('valueset', filtered);
 	},
 	get sortedConceptMaps() {
-		return this.sortedFor('conceptmap', this.conceptMaps);
+		const filtered = this.conceptMaps.filter(r =>
+			matchesTableFilter(r, this.tableFilter.conceptmap)
+		);
+		return this.sortedFor('conceptmap', filtered);
 	},
 	get installedEditions() {
 		const SNOMED_SCT_URL = 'http://snomed.info/sct';

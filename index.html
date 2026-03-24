@@ -807,7 +807,13 @@
 				<button type="button" class="btn btn-outline-primary" title="Open raw resource in new tab"
 					:disabled="!modalDetail || !modalDetail.fullUrl"
 					@click="modalDetail && modalDetail.fullUrl && window.open(modalDetail.fullUrl, '_blank', 'noopener,noreferrer')">
-					View Resource
+					View raw FHIR resource
+				</button>
+				<button type="button" class="btn btn-outline-primary"
+					title="Open $translate on the terminology server using the first mapped code"
+					:disabled="!modalDetail || !modalDetail.fullUrl || conceptMapTranslateExampleBusy"
+					@click="openConceptMapTranslateExample()">
+					View FHIR translate example
 				</button>
 				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
 			</div>

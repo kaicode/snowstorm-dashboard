@@ -62,7 +62,8 @@ function createDashboardState() {
 		syndicationAvailable: true,
 		txUrlPrompt: '',
 		txUrlDialogError: null,
-		routingInitialized: false
+		routingInitialized: false,
+		conceptMapTranslateExampleBusy: false
 	};
 }
 

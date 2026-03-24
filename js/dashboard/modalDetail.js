@@ -42,5 +42,39 @@ export const dashboardModalDetail = {
 		} finally {
 			this.modalLoading = false;
 		}
+	},
+
+	async openConceptMapTranslateExample() {
+		const fullUrl = this.modalDetail?.fullUrl;
+		if (!fullUrl) return;
+		this.conceptMapTranslateExampleBusy = true;
+		let res;
+		try {
+			res = await fetchWithTimeout(fullUrl, AJAX_TIMEOUT_MS);
+			const data = await res.json();
+			if (!res.ok) throw new Error(data.message || 'Failed to load ConceptMap');
+			const mapUrl = data.url != null ? String(data.url).trim() : '';
+			const g0 = Array.isArray(data.group) && data.group.length ? data.group[0] : null;
+			const system = g0 && g0.source != null ? String(g0.source).trim() : '';
+			const el0 = g0 && Array.isArray(g0.element) && g0.element.length ? g0.element[0] : null;
+			const code = el0 && el0.code != null ? String(el0.code).trim() : '';
+			if (!mapUrl || !system || !code) {
+				alert(
+					'This ConceptMap needs a canonical url, at least one group with source, and at least one element with code to open a translate example.'
+				);
+				return;
+			}
+			const qs = new URLSearchParams();
+			qs.append('code', code);
+			qs.append('system', system);
+			qs.append('url', mapUrl);
+			const path = `/ConceptMap/$translate?${qs.toString()}`;
+			window.open(`${this.fhirBaseUrl}${path}`, '_blank', 'noopener,noreferrer');
+		} catch (err) {
+			if (err.name === 'AbortError') alert('Request timed out. Please try again.');
+			else alert(err.message || 'Failed to open translate example');
+		} finally {
+			this.conceptMapTranslateExampleBusy = false;
+		}
 	}
 };

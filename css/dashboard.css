@@ -74,3 +74,24 @@ th.sortable {
     cursor: pointer;
     user-select: none;
 }
+
+/* ConceptMap details: wide URIs must wrap and stay inside the modal */
+#conceptmapModal .modal-body .row > [class*="col-"] {
+    min-width: 0;
+}
+#conceptmapModal .table {
+    table-layout: fixed;
+    width: 100%;
+}
+#conceptmapModal .table td {
+    vertical-align: top;
+}
+#conceptmapModal .table td:not(.fw-bold) {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+#conceptmapModal .alert,
+#conceptmapModal .text-muted {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}

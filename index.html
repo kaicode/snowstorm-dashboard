@@ -39,7 +39,10 @@
 			<h4>Snowstorm Dashboard</h4>
 		</div>
 		<div class="text-end">
-			<small class="text-muted" x-text="'FHIR API: ' + fhirBaseUrl"></small>
+			<small class="text-muted">
+				<span x-text="'FHIR API: ' + fhirBaseUrl"></span>
+				<a href="#" class="ms-2" @click.prevent="openTxUrlDialog()">edit</a>
+			</small>
 		</div>
 	</div>
 
@@ -322,12 +325,34 @@
 										<label class="form-check-label small" for="addConceptMapExperimental">Experimental</label>
 									</div>
 								</div>
+								<div class="col-12"
+									x-show="addConceptMapPayload && addConceptMapPayload.group && addConceptMapPayload.group.length">
+									<hr class="my-2">
+									<label class="form-label small mb-0">Map Group source code system</label>
+									<p class="text-muted small mb-2 mb-md-1">Each <code class="small">map group</code> must have a
+										<code class="small">source</code>: the canonical URI that identifies the source CodeSystem.
+									</p>
+									<template x-for="(g, idx) in addConceptMapPayload.group" :key="idx">
+										<div class="mb-2">
+											<label class="form-label small mb-0">
+												Group <span x-text="idx + 1"></span> — source URI <span class="text-danger">*</span>
+											</label>
+											<input type="text" class="form-control form-control-sm"
+												:placeholder="conceptMapDefaultGroupSource"
+												x-model="addConceptMapGroupSources[idx]">
+											<div x-show="(addConceptMapGroupSources[idx] || '').toLowerCase().includes('example.com')" x-transition
+												class="alert alert-warning py-1 px-2 small mb-0 mt-1" role="alert">
+												Replace with a URI for your source code system.
+											</div>
+										</div>
+									</template>
+								</div>
 							</div>
 						</div>
 						<div x-show="addConceptMapError" class="alert alert-danger py-2 small" x-text="addConceptMapError"></div>
 						<div class="d-flex align-items-center gap-2">
 							<button type="button" class="btn btn-primary btn-sm"
-								:disabled="addConceptMapSaving || !addConceptMapPayload || !(addConceptMapUrl || '').trim() || !(addConceptMapVersion || '').trim()"
+								:disabled="addConceptMapSaving || !addConceptMapPayload || !(addConceptMapUrl || '').trim() || !(addConceptMapVersion || '').trim() || !addConceptMapGroupSourcesComplete"
 								@click="submitAddConceptMap()">
 								<template x-if="!addConceptMapSaving">
 									<span>Add ConceptMap</span>
@@ -716,7 +741,7 @@
 
 <!-- ConceptMap Details Modal -->
 <div class="modal fade" id="conceptmapModal" tabindex="-1" aria-labelledby="conceptmapModalLabel" aria-hidden="true">
-	<div class="modal-dialog modal-lg">
+	<div class="modal-dialog modal-xl">
 		<div class="modal-content">
 			<div class="modal-header">
 				<h5 class="modal-title" id="conceptmapModalLabel">ConceptMap Details</h5>
@@ -786,6 +811,31 @@
 				</button>
 				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
 			</div>
+		</div>
+	</div>
+</div>
+
+<!-- FHIR Terminology Server URL (shown when ?tx= is not set) -->
+<div class="modal fade" id="txUrlModal" tabindex="-1" aria-labelledby="txUrlModalLabel" aria-hidden="true"
+	data-bs-backdrop="static" data-bs-keyboard="false"
+	@shown.bs.modal="$refs.txUrlInput?.focus()">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="txUrlModalLabel">FHIR Terminology Server</h5>
+			</div>
+			<form @submit.prevent="confirmTxUrl()">
+				<div class="modal-body">
+					<p class="text-muted small mb-2">Enter the base URL of your FHIR Terminology Server (for example, the Snowstorm FHIR endpoint ending in <code>/fhir</code>).</p>
+					<label for="txUrlInput" class="form-label">Server URL</label>
+					<input type="url" class="form-control" id="txUrlInput" name="txUrlInput" x-ref="txUrlInput"
+						x-model="txUrlPrompt" placeholder="https://example.com/fhir" autocomplete="url" required>
+					<div x-show="txUrlDialogError" class="alert alert-danger py-2 small mt-2 mb-0" x-text="txUrlDialogError"></div>
+				</div>
+				<div class="modal-footer">
+					<button type="submit" class="btn btn-primary">Continue</button>
+				</div>
+			</form>
 		</div>
 	</div>
 </div>

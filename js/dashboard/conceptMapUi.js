@@ -1,4 +1,4 @@
-import { AJAX_TIMEOUT_MS, CONCEPTMAP_DEFAULT_URL_PREFIX } from './constants.js';
+import { AJAX_TIMEOUT_MS, CONCEPTMAP_DEFAULT_GROUP_SOURCE, CONCEPTMAP_DEFAULT_URL_PREFIX } from './constants.js';
 import { normalizeConceptMapStatus, slugifyConceptMapName } from './conceptMapHelpers.js';
 import { fetchWithTimeout } from './http.js';
 
@@ -22,6 +22,7 @@ export const dashboardConceptMapUi = {
 				this.addConceptMapStatus = 'draft';
 				this.addConceptMapDescription = '';
 				this.addConceptMapExperimental = false;
+				this.addConceptMapGroupSources = [];
 				this.addConceptMapError = 'Invalid JSON: ' + (e.message || 'parse error');
 				return;
 			}
@@ -34,6 +35,7 @@ export const dashboardConceptMapUi = {
 				this.addConceptMapStatus = 'draft';
 				this.addConceptMapDescription = '';
 				this.addConceptMapExperimental = false;
+				this.addConceptMapGroupSources = [];
 				this.addConceptMapError = 'Resource must be a ConceptMap (resourceType: "ConceptMap")';
 				return;
 			}
@@ -52,6 +54,7 @@ export const dashboardConceptMapUi = {
 			this.addConceptMapStatus = normalizeConceptMapStatus(payload.status);
 			this.addConceptMapExperimental = payload.experimental === true;
 			if (!(this.addConceptMapUrl || '').trim()) this.syncConceptMapUrlFromName();
+			this.syncAddConceptMapGroupSourcesFromPayload();
 		};
 		reader.onerror = () => {
 			this.addConceptMapError = 'Failed to read file';
@@ -80,6 +83,18 @@ export const dashboardConceptMapUi = {
 		this.syncConceptMapUrlFromName();
 	},
 
+	syncAddConceptMapGroupSourcesFromPayload() {
+		const payload = this.addConceptMapPayload;
+		if (!payload || !Array.isArray(payload.group)) {
+			this.addConceptMapGroupSources = [];
+			return;
+		}
+		this.addConceptMapGroupSources = payload.group.map(g => {
+			const raw = g && g.source != null ? String(g.source).trim() : '';
+			return raw || CONCEPTMAP_DEFAULT_GROUP_SOURCE;
+		});
+	},
+
 	async submitAddConceptMap() {
 		if (!this.addConceptMapPayload) return;
 		const url = (this.addConceptMapUrl || '').trim();
@@ -104,6 +119,19 @@ export const dashboardConceptMapUi = {
 		if (desc) payload.description = desc;
 		else delete payload.description;
 		payload.experimental = !!this.addConceptMapExperimental;
+		const groups = payload.group;
+		if (Array.isArray(groups) && groups.length > 0) {
+			for (let i = 0; i < groups.length; i++) {
+				const src = String(this.addConceptMapGroupSources[i] ?? '').trim();
+				if (!src) {
+					this.addConceptMapError =
+						`Group ${i + 1}: source URI is required (canonical URI of the source code system).`;
+					this.addConceptMapSaving = false;
+					return;
+				}
+				groups[i].source = src;
+			}
+		}
 		try {
 			const res = await fetchWithTimeout(this.fhirBaseUrl + '/ConceptMap', AJAX_TIMEOUT_MS, {
 				method: 'POST',
@@ -135,6 +163,7 @@ export const dashboardConceptMapUi = {
 		this.addConceptMapStatus = 'draft';
 		this.addConceptMapDescription = '';
 		this.addConceptMapExperimental = false;
+		this.addConceptMapGroupSources = [];
 		this.addConceptMapError = null;
 	},
 

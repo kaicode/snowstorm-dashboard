@@ -1,3 +1,4 @@
+import { CONCEPTMAP_DEFAULT_GROUP_SOURCE } from './dashboard/constants.js';
 import { dashboardCapability } from './dashboard/capability.js';
 import { dashboardConceptMapUi } from './dashboard/conceptMapUi.js';
 import { dashboardGetters } from './dashboard/getters.js';
@@ -49,6 +50,8 @@ function createDashboardState() {
 		addConceptMapStatus: 'draft',
 		addConceptMapDescription: '',
 		addConceptMapExperimental: false,
+		addConceptMapGroupSources: [],
+		conceptMapDefaultGroupSource: CONCEPTMAP_DEFAULT_GROUP_SOURCE,
 		addConceptMapError: null,
 		addConceptMapSaving: false,
 		deleteConfirmId: null,
@@ -56,7 +59,10 @@ function createDashboardState() {
 		deletingConceptMap: false,
 		deleteConceptMapError: null,
 		capabilityStatement: null,
-		syndicationAvailable: true
+		syndicationAvailable: true,
+		txUrlPrompt: '',
+		txUrlDialogError: null,
+		routingInitialized: false
 	};
 }
 

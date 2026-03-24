@@ -18,8 +18,21 @@ export const dashboardModalDetail = {
 			const data = await res.json();
 			if (!res.ok) throw new Error(data.message || 'Not found');
 			this.modalDetail = data;
-			if (type === 'conceptmap' && this.modalDetail && !this.modalDetail.fullUrl && this.modalDetail.id) {
-				this.modalDetail.fullUrl = `${this.fhirBaseUrl}/ConceptMap/${encodeURIComponent(this.modalDetail.id)}`;
+			if (type === 'conceptmap' && this.modalDetail) {
+				const g0 = Array.isArray(this.modalDetail.group) && this.modalDetail.group.length
+					? this.modalDetail.group[0]
+					: null;
+				if (g0) {
+					if (g0.source != null && String(g0.source).trim() !== '') {
+						this.modalDetail.sourceCodeSystem = g0.source;
+					}
+					if (g0.target != null && String(g0.target).trim() !== '') {
+						this.modalDetail.targetCodeSystem = g0.target;
+					}
+				}
+				if (!this.modalDetail.fullUrl && this.modalDetail.id) {
+					this.modalDetail.fullUrl = `${this.fhirBaseUrl}/ConceptMap/${encodeURIComponent(this.modalDetail.id)}`;
+				}
 			}
 		} catch (err) {
 			if (err.name === 'AbortError') this.modalError = 'Request timed out. Please try again.';

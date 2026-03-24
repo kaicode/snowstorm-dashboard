@@ -62,6 +62,19 @@ export const dashboardGetters = {
 		);
 		return this.sortedFor('conceptmap', filtered);
 	},
+
+	/** True when every ConceptMap group has a non-empty source URI (or there are no groups). */
+	get addConceptMapGroupSourcesComplete() {
+		const payload = this.addConceptMapPayload;
+		if (!payload) return false;
+		const groups = payload.group;
+		if (!Array.isArray(groups) || groups.length === 0) return true;
+		const sources = this.addConceptMapGroupSources || [];
+		for (let i = 0; i < groups.length; i++) {
+			if (!String(sources[i] ?? '').trim()) return false;
+		}
+		return true;
+	},
 	get installedEditions() {
 		const SNOMED_SCT_URL = 'http://snomed.info/sct';
 		const versionPattern = /^https?:\/\/snomed\.info\/[xs]?sct\/(\d+)\/version\/(\d{8})/;
